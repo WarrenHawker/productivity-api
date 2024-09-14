@@ -42,6 +42,7 @@ model User {
   name                String
   email               String                        @unique
   password            String
+  status              UserStatus
 }
 
 model Tag {
@@ -79,4 +80,9 @@ model Note {
 enum ContentStatus {
   active
   archived
+}
+
+enum UserStatus {
+  active
+  locked
 }

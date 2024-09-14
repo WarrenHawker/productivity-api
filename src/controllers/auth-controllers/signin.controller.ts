@@ -5,6 +5,8 @@ import bcrypt from 'bcrypt';
 import { redisClient } from '../../lib/redis/client.redis';
 import prismaClient from '../../lib/prisma/client.prisma';
 import { ISession } from '../../types/express-session';
+import sendEmail from '../../services/email-service/email.service';
+import accountLockedTemplate from '../../services/email-service/templates/account-locked-template';
 
 const { isEmail, isStrongPassword, normalizeEmail, escape } = validator;
 
@@ -47,12 +49,37 @@ const signInUser = async (req: Request, res: Response) => {
 
   const match = await bcrypt.compare(password, userDB.password);
   if (!match) {
-    const error: ErrorReturn = {
-      code: 400,
-      message: 'Wrong password',
-      params: ['password'],
-    };
-    return res.status(error.code).json(error);
+    const timeout = 10;
+    const response = await redisClient
+      .multi()
+      .incr(`${email}_attempts`)
+      .expire(`${email}_attempts`, timeout)
+      .exec();
+    const attempts = response[0];
+
+    if ((attempts as number) > 3) {
+      await prismaClient.user.update({
+        where: { email: email },
+        data: { status: 'locked' },
+      });
+
+      const { text, html } = accountLockedTemplate(userDB.name, req.ip || '');
+      await sendEmail(email, 'account locked', text, html);
+
+      const error: ErrorReturn = {
+        code: 400,
+        message: 'Too many wrong attempts',
+        params: ['password'],
+      };
+      return res.status(error.code).json(error);
+    } else {
+      const error: ErrorReturn = {
+        code: 400,
+        message: 'Wrong password',
+        params: ['password'],
+      };
+      return res.status(error.code).json(error);
+    }
   }
 
   try {
