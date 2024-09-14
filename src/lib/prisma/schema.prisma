@@ -1,0 +1,82 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Prisma Migration Commands:
+//
+// 1. Generate and apply migration:
+//    npx prisma migrate dev --name <your_migration_name>
+//    - Generates a new migration based on schema changes and applies it immediately to the development database.
+//
+// 2. Generate migration without applying:
+//    npx prisma migrate dev --name <your_migration_name> --create-only
+//    - Generates the migration file but does not apply it to the database right away.
+//
+// 3. Apply all pending migrations:
+//    npx prisma migrate deploy
+//    - Applies all migrations that haven't been applied yet (useful in production).
+//
+// 4. Preview the migration (without applying):
+//    npx prisma migrate dev --preview-feature
+//    - Shows the migration that would be generated based on current schema changes, without actually applying it.
+//
+// 5. Reset the database (drops all data and applies all migrations):
+//    npx prisma migrate reset
+//    - Resets the database by dropping all data and reapplying all migrations from scratch.
+//
+// 6. Open Prisma Studio to view and edit data:
+//    npx prisma studio
+//    - Opens an interactive tool to view and manipulate the database data.
+
+
+generator client {
+  provider = "prisma-client-js" 
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                  String                        @id @default(cuid())
+  name                String
+  email               String                        @unique
+  password            String
+}
+
+model Tag {
+  id                  String                        @id @default(uuid())
+  name                String                        @unique
+  NoteTags            NoteTagRelation[]
+  @@index([name])
+}
+
+model NoteTagRelation {
+  id                  String                        @id @default(uuid())
+  tagId               String
+  noteId              String
+  note                Note                          @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  tag                 Tag                           @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@index([noteId])
+  @@index([tagId])
+}
+
+model Note {
+  id                  String                        @id @default(uuid())
+  title               String     
+  content             String   
+  tags                NoteTagRelation[]                
+  status              ContentStatus
+  created_on          DateTime                      @default(now())
+  updated_on          DateTime?                     @updatedAt
+
+  @@index([created_on])
+  @@index([status])
+  @@index([title])
+}
+
+enum ContentStatus {
+  active
+  archived
+}

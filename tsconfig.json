@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    /* Visit https://aka.ms/tsconfig to read more about this file */
+    "target": "ES2022",
+    "module": "commonjs",
+    "rootDir": "./src",
+    "typeRoots": ["./src/types", "./node_modules/@types"],
+    "outDir": "./dist",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "skipLibCheck": true
+  },
+  "exclude": ["src/tests/**/*"],
+  "include": [
+    "src/**/*",
+    "src/types/**/*.d.ts" // Make sure this includes your declaration files
+  ]
+}
