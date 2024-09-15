@@ -57,7 +57,7 @@ const signInUser = async (req: Request, res: Response) => {
       .exec();
     const attempts = response[0];
 
-    if ((attempts as number) > 3) {
+    if ((attempts as number) > 5) {
       await prismaClient.user.update({
         where: { email: email },
         data: { status: 'locked' },
